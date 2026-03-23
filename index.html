@@ -10,7 +10,6 @@
     <main class="page">
       <header class="header">
         <h1>Kvíz o rybách</h1>
-        <div id="playerTag" class="playerTag">Hráč: -</div>
         <div class="stats">
           <div>
             <div class="label">Skóre</div>
@@ -73,15 +72,6 @@
         </section>
       </section>
 
-      <section id="leaderboard" class="leaderboard" aria-live="polite" hidden>
-        <div class="leaderboardHeader">
-          <h2>Tabulka rekordů</h2>
-          <button id="clearScoresBtn" class="nextBtn secondary" type="button">Smazat rekordy</button>
-        </div>
-        <div id="personalBest" class="personalBest">Tvůj nejlepší výsledek: -</div>
-        <ol id="leaderboardList" class="leaderboardList"></ol>
-      </section>
-
       <section id="learningMode" class="learningMode" aria-live="polite" hidden>
         <div class="learningHeader">
           <h2>Režim učení</h2>
@@ -97,24 +87,6 @@
         </div>
       </section>
     </main>
-
-    <div id="playerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="playerModalTitle" hidden>
-      <div class="modalCard">
-        <h2 id="playerModalTitle">Vítej v kvízu</h2>
-        <p>Zadej jméno hráče, pod kterým se uloží výsledek.</p>
-        <input
-          id="playerNameInput"
-          class="playerInput"
-          type="text"
-          maxlength="20"
-          placeholder="Např. Daniel"
-          autocomplete="nickname"
-        />
-        <div class="modalControls">
-          <button id="startQuizBtn" class="nextBtn" type="button">Začít hru</button>
-        </div>
-      </div>
-    </div>
 
     <script defer src="./app.js"></script>
   </body>

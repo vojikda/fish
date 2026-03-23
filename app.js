@@ -2,9 +2,6 @@ const MAX_ROUNDS = 15;
 const SCORE_CORRECT = 1;
 const SCORE_WRONG = -1;
 const TIMER_SECONDS = 20;
-const LEADERBOARD_KEY = "fishQuizLeaderboardV2";
-const PLAYER_NAME_KEY = "fishQuizPlayerNameV2";
-const LEADERBOARD_LIMIT = 10;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -14,7 +11,6 @@ const els = {
   modeGameBtn: $("#modeGameBtn"),
   modeLearningBtn: $("#modeLearningBtn"),
   quiz: $("#quiz"),
-  leaderboard: $("#leaderboard"),
   learningMode: $("#learningMode"),
   learningGrid: $("#learningGrid"),
   backToModesBtn: $("#backToModesBtn"),
@@ -30,13 +26,6 @@ const els = {
   nextBtn: $("#nextBtn"),
   restartBtn: $("#restartBtn"),
   fishInfoBox: $("#fishInfoBox"),
-  playerTag: $("#playerTag"),
-  playerModal: $("#playerModal"),
-  playerNameInput: $("#playerNameInput"),
-  startQuizBtn: $("#startQuizBtn"),
-  leaderboardList: $("#leaderboardList"),
-  personalBest: $("#personalBest"),
-  clearScoresBtn: $("#clearScoresBtn"),
 };
 
 function showLoading(show) {
@@ -93,92 +82,6 @@ function getRankTitle(score, totalRounds) {
   if (ratio >= 1.0) return "Kapitán revíru";
   if (ratio >= 0.4) return "Zkušený plaváček";
   return "Rybníkový nováček";
-}
-
-function normalizePlayerName(name) {
-  return String(name || "")
-    .trim()
-    .replace(/\s+/g, " ")
-    .slice(0, 20);
-}
-
-function loadLeaderboard() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((x) => x && typeof x === "object");
-  } catch {
-    return [];
-  }
-}
-
-function saveLeaderboard(rows) {
-  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows));
-}
-
-function compareResults(a, b) {
-  if (b.score !== a.score) return b.score - a.score;
-  if (b.bestStreak !== a.bestStreak) return b.bestStreak - a.bestStreak;
-  return String(b.playedAt).localeCompare(String(a.playedAt));
-}
-
-function renderLeaderboard() {
-  const allRows = loadLeaderboard();
-  const playerName = state?.playerName || normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY));
-  const board = allRows.sort(compareResults).slice(0, LEADERBOARD_LIMIT);
-  els.leaderboardList.innerHTML = "";
-  if (board.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "Zatím žádné výsledky.";
-    els.leaderboardList.appendChild(li);
-  } else {
-    board.forEach((row, idx) => {
-      const li = document.createElement("li");
-      const medal = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
-      li.textContent = `${medal}${row.name} — ${row.score} b. (série ${row.bestStreak})`;
-      if (playerName && row.name === playerName) {
-        li.classList.add("currentPlayerRow");
-      }
-      els.leaderboardList.appendChild(li);
-    });
-  }
-
-  if (!playerName) {
-    els.personalBest.textContent = "Tvůj nejlepší výsledek: -";
-    return;
-  }
-
-  const personalBest = allRows
-    .filter((x) => x.name === playerName)
-    .sort(compareResults)[0];
-  if (!personalBest) {
-    els.personalBest.textContent = "Tvůj nejlepší výsledek: zatím žádný.";
-    return;
-  }
-  els.personalBest.textContent = `Tvůj nejlepší výsledek: ${personalBest.score} b. (série ${personalBest.bestStreak})`;
-}
-
-function saveCurrentResult() {
-  if (!state?.playerName) return;
-  const board = loadLeaderboard();
-  board.push({
-    name: state.playerName,
-    score: state.score,
-    totalRounds: state.totalRounds,
-    bestStreak: state.bestStreak,
-    playedAt: new Date().toISOString(),
-  });
-  board.sort(compareResults);
-  saveLeaderboard(board.slice(0, 100));
-}
-
-function setPlayerName(name) {
-  const normalized = normalizePlayerName(name);
-  if (!normalized) return false;
-  state.playerName = normalized;
-  localStorage.setItem(PLAYER_NAME_KEY, normalized);
-  els.playerTag.textContent = `Hráč: ${normalized}`;
-  return true;
 }
 
 function shuffleInPlace(arr) {
@@ -374,19 +277,15 @@ function renderQuestion({ roundIndex, totalRounds, correctRow, optionNames, corr
 
 let state = null;
 let appData = null;
-let currentMode = "menu";
 
 function setModeView(mode) {
-  currentMode = mode;
   const isMenu = mode === "menu";
   const isGame = mode === "game";
   const isLearning = mode === "learning";
 
   els.modeChooser.hidden = !isMenu;
   els.quiz.hidden = !isGame;
-  els.leaderboard.hidden = !isGame;
   els.learningMode.hidden = !isLearning;
-  els.playerModal.hidden = true;
 }
 
 function renderLearningCards(rows) {
@@ -429,26 +328,12 @@ function renderLearningCards(rows) {
 function enterLearningMode() {
   stopQuestionTimer();
   setModeView("learning");
-  els.playerTag.textContent = "Hráč: -";
 }
 
 function enterGameMode() {
   if (!appData) return;
   setModeView("game");
   startNewQuiz(appData);
-  const rememberedName = normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY));
-  if (rememberedName) {
-    setPlayerName(rememberedName);
-    els.playerModal.hidden = true;
-    restartQuiz();
-  } else {
-    els.playerModal.hidden = false;
-    stopQuestionTimer();
-    setOptionButtonsDisabled(true);
-    els.playerNameInput.value = "";
-    els.playerNameInput.focus();
-  }
-  renderLeaderboard();
 }
 
 function stopQuestionTimer() {
@@ -529,7 +414,6 @@ function startNewQuiz(fishState) {
   const questionItems = shuffleInPlace(uniquePictureRows.slice()).slice(0, MAX_ROUNDS);
 
   state = {
-    playerName: state?.playerName || normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY)) || "",
     fishState,
     round: 1,
     totalRounds: Math.min(MAX_ROUNDS, uniquePictureRows.length),
@@ -551,7 +435,6 @@ function startNewQuiz(fishState) {
 
   els.score.textContent = String(state.score);
   els.streak.textContent = "0";
-  els.playerTag.textContent = `Hráč: ${state.playerName || "-"}`;
   updateTimerDisplay(TIMER_SECONDS);
   updateProgressBar(1, state.totalRounds);
   els.restartBtn.hidden = true;
@@ -683,8 +566,6 @@ function finishQuiz() {
     correctRevealText: `Tvoje hodnost: ${rank} | Nejdelší série: ${state.bestStreak}`,
     isFinal: true,
   });
-  saveCurrentResult();
-  renderLeaderboard();
 }
 
 function nextRound() {
@@ -706,34 +587,12 @@ function wireEvents() {
   els.backToModesBtn.addEventListener("click", () => {
     stopQuestionTimer();
     setModeView("menu");
-    els.playerTag.textContent = `Hráč: ${
-      normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY)) || "-"
-    }`;
   });
   els.optionButtons.forEach((btn) => {
     btn.addEventListener("click", handleOptionClick);
   });
   els.nextBtn.addEventListener("click", nextRound);
   els.restartBtn.addEventListener("click", restartQuiz);
-  els.startQuizBtn.addEventListener("click", () => {
-    const ok = setPlayerName(els.playerNameInput.value);
-    if (!ok) {
-      els.playerNameInput.focus();
-      return;
-    }
-    els.playerModal.hidden = true;
-    restartQuiz();
-  });
-  els.playerNameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      els.startQuizBtn.click();
-    }
-  });
-  els.clearScoresBtn.addEventListener("click", () => {
-    localStorage.removeItem(LEADERBOARD_KEY);
-    renderLeaderboard();
-  });
 }
 
 async function bootstrap() {
@@ -745,10 +604,6 @@ async function bootstrap() {
     showLoading(false);
     renderLearningCards(fishState.rows);
     setModeView("menu");
-    els.playerTag.textContent = `Hráč: ${
-      normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY)) || "-"
-    }`;
-    renderLeaderboard();
   } catch (err) {
     stopQuestionTimer();
     showLoading(false);
