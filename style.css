@@ -104,6 +104,29 @@ body::after {
   padding: 18px;
 }
 
+.modeChooser {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(17, 26, 46, 0.45);
+}
+
+.modeChooser h2 {
+  margin: 0;
+}
+
+.modeChooser p {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.modeButtons {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .progressWrap {
   width: 100%;
   height: 10px;
@@ -260,6 +283,61 @@ body::after {
   border-radius: 16px;
   padding: 14px;
   background: rgba(17, 26, 46, 0.45);
+}
+
+.learningMode {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(17, 26, 46, 0.45);
+}
+
+.learningHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.learningHeader h2 {
+  margin: 0;
+}
+
+.learningGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.learningCard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(10, 18, 38, 0.55);
+  overflow: hidden;
+}
+
+.learningCard img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.learningCardBody {
+  padding: 10px;
+}
+
+.learningFishName {
+  font-weight: 800;
+}
+
+.learningFishInfo {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .leaderboardHeader {

@@ -10,7 +10,14 @@ const $ = (sel) => document.querySelector(sel);
 
 const els = {
   loading: $("#loading"),
+  modeChooser: $("#modeChooser"),
+  modeGameBtn: $("#modeGameBtn"),
+  modeLearningBtn: $("#modeLearningBtn"),
   quiz: $("#quiz"),
+  leaderboard: $("#leaderboard"),
+  learningMode: $("#learningMode"),
+  learningGrid: $("#learningGrid"),
+  backToModesBtn: $("#backToModesBtn"),
   score: $("#score"),
   round: $("#round"),
   streak: $("#streak"),
@@ -34,7 +41,6 @@ const els = {
 
 function showLoading(show) {
   els.loading.classList.toggle("show", show);
-  els.quiz.style.display = show ? "none" : "";
 }
 
 function setOptionButtonsDisabled(disabled) {
@@ -367,6 +373,83 @@ function renderQuestion({ roundIndex, totalRounds, correctRow, optionNames, corr
 }
 
 let state = null;
+let appData = null;
+let currentMode = "menu";
+
+function setModeView(mode) {
+  currentMode = mode;
+  const isMenu = mode === "menu";
+  const isGame = mode === "game";
+  const isLearning = mode === "learning";
+
+  els.modeChooser.hidden = !isMenu;
+  els.quiz.hidden = !isGame;
+  els.leaderboard.hidden = !isGame;
+  els.learningMode.hidden = !isLearning;
+  els.playerModal.hidden = true;
+}
+
+function renderLearningCards(rows) {
+  const firstByName = new Map();
+  for (const row of rows) {
+    if (!row?.czechName || !row?.imageSrc) continue;
+    if (!firstByName.has(row.czechName)) firstByName.set(row.czechName, row);
+  }
+  const items = Array.from(firstByName.values()).sort((a, b) =>
+    a.czechName.localeCompare(b.czechName, "cs")
+  );
+
+  els.learningGrid.innerHTML = "";
+  for (const item of items) {
+    const card = document.createElement("article");
+    card.className = "learningCard";
+    const img = document.createElement("img");
+    img.src = item.imageSrc;
+    img.alt = item.czechName;
+
+    const body = document.createElement("div");
+    body.className = "learningCardBody";
+
+    const title = document.createElement("div");
+    title.className = "learningFishName";
+    title.textContent = item.czechName;
+
+    const info = document.createElement("div");
+    info.className = "learningFishInfo";
+    info.textContent = item.info || "";
+
+    body.appendChild(title);
+    body.appendChild(info);
+    card.appendChild(img);
+    card.appendChild(body);
+    els.learningGrid.appendChild(card);
+  }
+}
+
+function enterLearningMode() {
+  stopQuestionTimer();
+  setModeView("learning");
+  els.playerTag.textContent = "Hráč: -";
+}
+
+function enterGameMode() {
+  if (!appData) return;
+  setModeView("game");
+  startNewQuiz(appData);
+  const rememberedName = normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY));
+  if (rememberedName) {
+    setPlayerName(rememberedName);
+    els.playerModal.hidden = true;
+    restartQuiz();
+  } else {
+    els.playerModal.hidden = false;
+    stopQuestionTimer();
+    setOptionButtonsDisabled(true);
+    els.playerNameInput.value = "";
+    els.playerNameInput.focus();
+  }
+  renderLeaderboard();
+}
 
 function stopQuestionTimer() {
   if (!state?.timerId) return;
@@ -618,6 +701,15 @@ function restartQuiz() {
 }
 
 function wireEvents() {
+  els.modeGameBtn.addEventListener("click", enterGameMode);
+  els.modeLearningBtn.addEventListener("click", enterLearningMode);
+  els.backToModesBtn.addEventListener("click", () => {
+    stopQuestionTimer();
+    setModeView("menu");
+    els.playerTag.textContent = `Hráč: ${
+      normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY)) || "-"
+    }`;
+  });
   els.optionButtons.forEach((btn) => {
     btn.addEventListener("click", handleOptionClick);
   });
@@ -649,25 +741,18 @@ async function bootstrap() {
   showLoading(true);
   try {
     const fishState = await loadFishData();
+    appData = fishState;
     showLoading(false);
-    startNewQuiz(fishState);
-    const rememberedName = normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY));
-    if (rememberedName) {
-      setPlayerName(rememberedName);
-      els.playerModal.hidden = true;
-      restartQuiz();
-    } else {
-      els.playerModal.hidden = false;
-      stopQuestionTimer();
-      setOptionButtonsDisabled(true);
-      els.playerNameInput.value = "";
-      els.playerNameInput.focus();
-    }
+    renderLearningCards(fishState.rows);
+    setModeView("menu");
+    els.playerTag.textContent = `Hráč: ${
+      normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY)) || "-"
+    }`;
     renderLeaderboard();
   } catch (err) {
     stopQuestionTimer();
     showLoading(false);
-    els.quiz.style.display = "";
+    setModeView("game");
     els.score.textContent = "0";
     els.round.textContent = `0 / ${MAX_ROUNDS}`;
     setOptionButtonsDisabled(true);

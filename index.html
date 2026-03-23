@@ -31,7 +31,16 @@
         </div>
       </header>
 
-      <section id="quiz" class="quiz" aria-live="polite">
+      <section id="modeChooser" class="modeChooser" aria-live="polite">
+        <h2>Vyber režim</h2>
+        <p>Chceš si otestovat znalosti, nebo se nejdřív učit názvy ryb?</p>
+        <div class="modeButtons">
+          <button id="modeGameBtn" class="nextBtn" type="button">Hra</button>
+          <button id="modeLearningBtn" class="nextBtn secondary" type="button">Učení</button>
+        </div>
+      </section>
+
+      <section id="quiz" class="quiz" aria-live="polite" hidden>
         <div class="progressWrap" aria-hidden="true">
           <div id="progressBar" class="progressBar"></div>
         </div>
@@ -64,13 +73,21 @@
         </section>
       </section>
 
-      <section class="leaderboard" aria-live="polite">
+      <section id="leaderboard" class="leaderboard" aria-live="polite" hidden>
         <div class="leaderboardHeader">
           <h2>Tabulka rekordů</h2>
           <button id="clearScoresBtn" class="nextBtn secondary" type="button">Smazat rekordy</button>
         </div>
         <div id="personalBest" class="personalBest">Tvůj nejlepší výsledek: -</div>
         <ol id="leaderboardList" class="leaderboardList"></ol>
+      </section>
+
+      <section id="learningMode" class="learningMode" aria-live="polite" hidden>
+        <div class="learningHeader">
+          <h2>Režim učení</h2>
+          <button id="backToModesBtn" class="nextBtn secondary" type="button">Zpět na výběr režimu</button>
+        </div>
+        <div id="learningGrid" class="learningGrid"></div>
       </section>
 
       <section id="loading" class="loading" aria-live="polite">
