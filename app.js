@@ -400,6 +400,11 @@ function onTimeExpired() {
     els.fishInfoBox.textContent = "";
     els.fishInfoBox.hidden = true;
   }
+
+  if (state.round >= state.totalRounds) {
+    finishQuiz();
+    return;
+  }
 }
 
 function startQuestionTimer() {
@@ -572,6 +577,11 @@ function handleOptionClick(e) {
   } else {
     els.fishInfoBox.textContent = "";
     els.fishInfoBox.hidden = true;
+  }
+
+  if (state.round >= state.totalRounds) {
+    finishQuiz();
+    return;
   }
 }
 
