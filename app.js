@@ -117,7 +117,9 @@ function compareResults(a, b) {
 }
 
 function renderLeaderboard() {
-  const board = loadLeaderboard().sort(compareResults).slice(0, LEADERBOARD_LIMIT);
+  const allRows = loadLeaderboard();
+  const playerName = state?.playerName || normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY));
+  const board = allRows.sort(compareResults).slice(0, LEADERBOARD_LIMIT);
   els.leaderboardList.innerHTML = "";
   if (board.length === 0) {
     const li = document.createElement("li");
@@ -128,19 +130,19 @@ function renderLeaderboard() {
       const li = document.createElement("li");
       const medal = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
       li.textContent = `${medal}${row.name} — ${row.score} b. (série ${row.bestStreak})`;
-      if (state?.playerName && row.name === state.playerName) {
+      if (playerName && row.name === playerName) {
         li.classList.add("currentPlayerRow");
       }
       els.leaderboardList.appendChild(li);
     });
   }
 
-  const playerName = state?.playerName || normalizePlayerName(localStorage.getItem(PLAYER_NAME_KEY));
   if (!playerName) {
     els.personalBest.textContent = "Tvůj nejlepší výsledek: -";
     return;
   }
-  const personalBest = board
+
+  const personalBest = allRows
     .filter((x) => x.name === playerName)
     .sort(compareResults)[0];
   if (!personalBest) {
