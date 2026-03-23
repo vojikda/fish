@@ -19,6 +19,35 @@ body {
     Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: radial-gradient(1200px 600px at 20% 0%, #14224a 0%, var(--bg) 60%);
   color: var(--text);
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 10% 85%, rgba(92, 200, 255, 0.2) 0 12px, transparent 13px),
+    radial-gradient(circle at 30% 100%, rgba(92, 200, 255, 0.17) 0 8px, transparent 9px),
+    radial-gradient(circle at 55% 92%, rgba(92, 200, 255, 0.14) 0 10px, transparent 11px),
+    radial-gradient(circle at 80% 97%, rgba(92, 200, 255, 0.18) 0 9px, transparent 10px),
+    radial-gradient(circle at 95% 88%, rgba(92, 200, 255, 0.16) 0 11px, transparent 12px);
+  animation: bubblesRise 18s linear infinite;
+}
+
+body::after {
+  background:
+    radial-gradient(circle at 18% 100%, rgba(92, 200, 255, 0.1) 0 9px, transparent 10px),
+    radial-gradient(circle at 47% 95%, rgba(92, 200, 255, 0.08) 0 7px, transparent 8px),
+    radial-gradient(circle at 70% 100%, rgba(92, 200, 255, 0.12) 0 8px, transparent 9px),
+    radial-gradient(circle at 88% 93%, rgba(92, 200, 255, 0.09) 0 6px, transparent 7px);
+  animation: bubblesRise 24s linear infinite reverse;
 }
 
 .page {
@@ -58,11 +87,30 @@ body {
   font-weight: 700;
 }
 
+#timer.low {
+  color: #ffd166;
+}
+
 .quiz {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 18px;
+}
+
+.progressWrap {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progressBar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #5cc8ff, #35d07f);
+  transition: width 220ms ease;
 }
 
 .imageWrap {
@@ -221,6 +269,15 @@ body {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes bubblesRise {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-120px);
   }
 }
 

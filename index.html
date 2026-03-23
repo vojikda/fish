@@ -19,10 +19,21 @@
             <div class="label">Kolo</div>
             <div id="round" class="value">1 / 15</div>
           </div>
+          <div>
+            <div class="label">Série</div>
+            <div id="streak" class="value">0</div>
+          </div>
+          <div>
+            <div class="label">Čas</div>
+            <div id="timer" class="value">10 s</div>
+          </div>
         </div>
       </header>
 
       <section id="quiz" class="quiz" aria-live="polite">
+        <div class="progressWrap" aria-hidden="true">
+          <div id="progressBar" class="progressBar"></div>
+        </div>
         <div class="prompt">
           <div class="imageWrap">
             <img id="fishImage" alt="Ryba" class="birdImage" />

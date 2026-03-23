@@ -1,6 +1,7 @@
 const MAX_ROUNDS = 15;
 const SCORE_CORRECT = 1;
 const SCORE_WRONG = -1;
+const TIMER_SECONDS = 10;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -9,6 +10,9 @@ const els = {
   quiz: $("#quiz"),
   score: $("#score"),
   round: $("#round"),
+  streak: $("#streak"),
+  timer: $("#timer"),
+  progressBar: $("#progressBar"),
   fishImage: $("#fishImage"),
   optionButtons: Array.from(document.querySelectorAll(".option")),
   feedbackText: $("#feedbackText"),
@@ -46,6 +50,33 @@ function setFeedback({ text, correctRevealText, isFinal = false }) {
   }
   // Keep DOM structure stable; only control content/hidden state.
   els.nextBtn.disabled = isFinal;
+}
+
+function updateTimerDisplay(seconds) {
+  els.timer.textContent = `${seconds} s`;
+  els.timer.classList.toggle("low", seconds <= 3);
+}
+
+function updateProgressBar(round, totalRounds) {
+  const doneRounds = Math.max(0, round - 1);
+  const rawPercent = totalRounds > 0 ? (doneRounds / totalRounds) * 100 : 0;
+  const percent = Math.max(0, Math.min(100, rawPercent));
+  els.progressBar.style.width = `${percent}%`;
+}
+
+function getStreakMultiplier(streak) {
+  if (streak < 2) return 1;
+  return Math.min(3, 1 + Math.floor(streak / 2));
+}
+
+function getRankTitle(score, totalRounds) {
+  const safeRounds = Math.max(1, totalRounds);
+  const ratio = score / safeRounds;
+  if (ratio >= 2.2) return "Legenda oceánu";
+  if (ratio >= 1.6) return "Mistr rybář";
+  if (ratio >= 1.0) return "Kapitán revíru";
+  if (ratio >= 0.4) return "Zkušený plaváček";
+  return "Rybníkový nováček";
 }
 
 function shuffleInPlace(arr) {
@@ -196,6 +227,7 @@ function pickUniqueRandom(arr, count, { exclude = new Set() } = {}) {
 
 function renderQuestion({ roundIndex, totalRounds, correctRow, optionNames, correctName }) {
   els.round.textContent = `${roundIndex} / ${totalRounds}`;
+  updateProgressBar(roundIndex, totalRounds);
 
   els.fishImage.alt = correctName;
   els.fishImage.src = correctRow.imageSrc;
@@ -226,6 +258,7 @@ function renderQuestion({ roundIndex, totalRounds, correctRow, optionNames, corr
   els.correctReveal.hidden = true;
   els.feedbackText.textContent = "Vyber správný název ryby.";
   setOptionButtonsDisabled(false);
+  state.answeredCurrentRound = false;
 
   // Clear feedback content from any previous question.
   els.correctReveal.textContent = "";
@@ -233,9 +266,64 @@ function renderQuestion({ roundIndex, totalRounds, correctRow, optionNames, corr
   // Clear fish info until the player answers.
   els.fishInfoBox.hidden = true;
   els.fishInfoBox.textContent = "";
+
+  startQuestionTimer();
 }
 
 let state = null;
+
+function stopQuestionTimer() {
+  if (!state?.timerId) return;
+  clearInterval(state.timerId);
+  state.timerId = null;
+}
+
+function onTimeExpired() {
+  if (!state || state.finished || state.answeredCurrentRound) return;
+  state.answeredCurrentRound = true;
+  stopQuestionTimer();
+  setOptionButtonsDisabled(true);
+  clearOptionButtonStyles();
+  state.streak = 0;
+  els.streak.textContent = "0";
+  state.score += SCORE_WRONG;
+  els.score.textContent = String(state.score);
+  els.optionButtons.forEach((b) => {
+    if (b.dataset.isCorrect === "1") b.classList.add("correct");
+  });
+  setFeedback({
+    text: "Čas vypršel!",
+    correctRevealText: `Správná odpověď: ${state.currentCorrectName}`,
+    isFinal: false,
+  });
+  els.nextBtn.disabled = false;
+
+  const infoText = state.currentInfo;
+  if (infoText) {
+    els.fishInfoBox.textContent = infoText;
+    els.fishInfoBox.hidden = false;
+  } else {
+    els.fishInfoBox.textContent = "";
+    els.fishInfoBox.hidden = true;
+  }
+}
+
+function startQuestionTimer() {
+  stopQuestionTimer();
+  state.timeLeft = TIMER_SECONDS;
+  updateTimerDisplay(state.timeLeft);
+  state.timerId = setInterval(() => {
+    if (!state || state.finished) {
+      stopQuestionTimer();
+      return;
+    }
+    state.timeLeft -= 1;
+    updateTimerDisplay(Math.max(0, state.timeLeft));
+    if (state.timeLeft <= 0) {
+      onTimeExpired();
+    }
+  }, 1000);
+}
 
 function startNewQuiz(fishState) {
   // Enforce the "each concrete picture exactly once per game" rule.
@@ -261,6 +349,11 @@ function startNewQuiz(fishState) {
     round: 1,
     totalRounds: Math.min(MAX_ROUNDS, uniquePictureRows.length),
     score: 0,
+    streak: 0,
+    bestStreak: 0,
+    timeLeft: TIMER_SECONDS,
+    timerId: null,
+    answeredCurrentRound: false,
     finished: false,
     currentCorrectName: null,
     currentInfo: null,
@@ -272,6 +365,9 @@ function startNewQuiz(fishState) {
   }
 
   els.score.textContent = String(state.score);
+  els.streak.textContent = "0";
+  updateTimerDisplay(TIMER_SECONDS);
+  updateProgressBar(1, state.totalRounds);
   els.restartBtn.hidden = true;
 
   renderCurrentRound();
@@ -327,7 +423,9 @@ function renderCurrentRound() {
 }
 
 function handleOptionClick(e) {
-  if (!state || state.finished) return;
+  if (!state || state.finished || state.answeredCurrentRound) return;
+  state.answeredCurrentRound = true;
+  stopQuestionTimer();
   const btn = e.currentTarget;
   const isCorrect = btn.dataset.isCorrect === "1";
 
@@ -342,14 +440,23 @@ function handleOptionClick(e) {
   });
 
   if (isCorrect) {
-    state.score += SCORE_CORRECT;
+    state.streak += 1;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    els.streak.textContent = String(state.streak);
+
+    const multiplier = getStreakMultiplier(state.streak);
+    const speedBonus = Math.max(0, state.timeLeft - 3);
+    const earned = SCORE_CORRECT * multiplier + speedBonus;
+    state.score += earned;
     els.score.textContent = String(state.score);
     setFeedback({
-      text: "Správně!",
+      text: `Správně! +${earned} bodů (kombo x${multiplier}, rychlost +${speedBonus})`,
       correctRevealText: null,
       isFinal: false,
     });
   } else {
+    state.streak = 0;
+    els.streak.textContent = "0";
     state.score += SCORE_WRONG;
     els.score.textContent = String(state.score);
     setFeedback({
@@ -373,13 +480,16 @@ function handleOptionClick(e) {
 }
 
 function finishQuiz() {
+  stopQuestionTimer();
   state.finished = true;
   els.nextBtn.disabled = true;
   els.restartBtn.hidden = false;
+  updateProgressBar(state.totalRounds + 1, state.totalRounds);
+  const rank = getRankTitle(state.score, state.totalRounds);
 
   setFeedback({
     text: `Hotovo! Konečné skóre: ${state.score}`,
-    correctRevealText: null,
+    correctRevealText: `Tvoje hodnost: ${rank} | Nejdelší série: ${state.bestStreak}`,
     isFinal: true,
   });
 }
@@ -393,6 +503,7 @@ function nextRound() {
 
 function restartQuiz() {
   if (!state) return;
+  stopQuestionTimer();
   startNewQuiz(state.fishState);
 }
 
@@ -412,6 +523,7 @@ async function bootstrap() {
     showLoading(false);
     startNewQuiz(fishState);
   } catch (err) {
+    stopQuestionTimer();
     showLoading(false);
     els.quiz.style.display = "";
     els.score.textContent = "0";
