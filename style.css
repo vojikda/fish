@@ -70,6 +70,12 @@ body::after {
   letter-spacing: 0.2px;
 }
 
+.playerTag {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .stats {
   display: flex;
   gap: 16px;
@@ -246,6 +252,91 @@ body::after {
 
 .loading.show {
   display: block;
+}
+
+.leaderboard {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(17, 26, 46, 0.45);
+}
+
+.leaderboardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.leaderboardHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.personalBest {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.leaderboardList {
+  margin: 10px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+}
+
+.currentPlayerRow {
+  color: #bdf8c9;
+  font-weight: 700;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 24, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modalCard {
+  width: min(460px, 100%);
+  background: #0f1830;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.modalCard h2 {
+  margin: 0 0 8px;
+}
+
+.modalCard p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.playerInput {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 16px;
+}
+
+.modalControls {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .loadingCard {
